@@ -5,14 +5,30 @@ import os
 import json
 from datetime import datetime
 import mimetypes
+import socket
+import zipfile
+import io
 
 app = Flask(__name__)
 CORS(app)
 
+# ============ IP DETECTION FUNCTION ============
+def get_local_ip():
+    """Detect the Host PC's Local IP address."""
+    try:
+        # Connect to an external server (no actual connection made)
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
+    except Exception:
+        return "127.0.0.1"
+
 # Configuration
 BASE_DIR = Path(__file__).parent.parent
 UPLOAD_DIR = BASE_DIR / "uploads"
-ALLOWED_EXTENSIONS = {'.jpg', '.png', '.img', '.jpeg', '.json', '.shp', '.shx', '.dbf'}
+ALLOWED_EXTENSIONS = {'.shp', '.shx', '.dbf', '.prj', '.geojson', '.json', '.kml', '.kmz', '.csv', '.tif', '.tiff', '.jp2', '.png', '.jpg', '.jpeg', '.webp', '.svg'}
 MAX_FILE_SIZE = 500 * 1024 * 1024  # 500MB
 
 # Ensure uploads directory exists
@@ -286,6 +302,56 @@ def download_file(segment_id, file_path):
         }), 500
 
 
+@app.route('/api/download-all/<segment_id>', methods=['GET'])
+def download_all(segment_id):
+    """
+    Download all files from a segment as a ZIP archive.
+    """
+    try:
+        # Validate segment ID
+        if not is_valid_segment_id(segment_id):
+            return jsonify({
+                "success": False,
+                "error": "Invalid segment ID."
+            }), 400
+        
+        segment_dir = UPLOAD_DIR / segment_id
+        
+        # Check if segment exists
+        if not segment_dir.exists():
+            return jsonify({
+                "success": False,
+                "error": f"Segment {segment_id} does not exist."
+            }), 404
+        
+        # Create in-memory zip file
+        zip_buffer = io.BytesIO()
+        
+        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+            # Walk through all files in segment directory
+            for root, dirs, files in os.walk(segment_dir):
+                for file in files:
+                    file_path = Path(root) / file
+                    # Get relative path for archive
+                    rel_path = file_path.relative_to(segment_dir)
+                    zip_file.write(file_path, arcname=rel_path)
+        
+        zip_buffer.seek(0)
+        
+        return send_file(
+            zip_buffer,
+            mimetype='application/zip',
+            as_attachment=True,
+            download_name=f'files_{segment_id}.zip'
+        )
+    
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": f"Download failed: {str(e)}"
+        }), 500
+
+
 @app.route('/api/delete/<segment_id>/<path:file_path>', methods=['DELETE'])
 def delete_file(segment_id, file_path):
     """
@@ -360,4 +426,23 @@ def list_segments():
 
 
 if __name__ == '__main__':
+    local_ip = get_local_ip()
+    
+    # Display startup information
+    print("\n")
+    print("╔" + "=" * 60 + "╗")
+    print("║" + " " * 60 + "║")
+    print("║" + "  🗂️  FileHub - Professional File Sharing System".center(60) + "║")
+    print("║" + " " * 60 + "║")
+    print("╠" + "=" * 60 + "╣")
+    print("║" + f" 📍 Local IP Address:  {local_ip}".ljust(60) + "║")
+    print("║" + f" 🌐 Backend API:       http://{local_ip}:5000/api".ljust(60) + "║")
+    print("║" + f" 💻 Frontend UI:       http://{local_ip}:8000".ljust(60) + "║")
+    print("║" + " " * 60 + "║")
+    print("║" + " Access from Other PCs:".ljust(60) + "║")
+    print("║" + f" 📱 http://{local_ip}:8000".ljust(60) + "║")
+    print("║" + " " * 60 + "║")
+    print("╚" + "=" * 60 + "╝")
+    print("\n")
+    
     app.run(debug=True, host='0.0.0.0', port=5000)

@@ -1,827 +1,1043 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FileHub - File Management System</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>FileHub</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap"
+        rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
     <style>
-        /* Hide number input spinner buttons */
-        input[type="number"]::-webkit-outer-spin-button,
-        input[type="number"]::-webkit-inner-spin-button {
-            -webkit-appearance: none;
+        /* === STRONG RESET - FIXES BLANK TOP SPACE === */
+        *,
+        *::before,
+        *::after {
             margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        input[type="number"] {
-            -moz-appearance: textfield;
+
+        html,
+        body {
+            margin: 0 !important;
+            padding: 0 !important;
+            height: 100%;
+            overflow-x: hidden;
+            background: #f8fafd;
+            -webkit-font-smoothing: antialiased;
+            -webkit-text-size-adjust: 100%;
+            text-rendering: optimizeLegibility;
+        }
+
+        :root {
+            --bg: #f8fafd;
+            --glass: rgba(255, 255, 255, 0.85);
+            --glass-border: rgba(99, 102, 241, 0.18);
+            --accent: #6366f1;
+            --accent-gradient: linear-gradient(135deg, #6366f1, #a855f7, #22d3ee);
+            --text: #1e2937;
+            --text2: #64748b;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            color: var(--text);
+            position: relative;
+            font-weight: 400;
+            letter-spacing: -0.3px;
+        }
+
+        /* Background blurred orbs */
+        .bg-orbs {
+            position: fixed;
+            inset: 0;
+            z-index: 1;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(90px);
+            opacity: 0.16;
+            animation: floatOrb 35s infinite ease-in-out;
+            will-change: transform;
+            backface-visibility: hidden;
+            transform: translateZ(0);
+        }
+
+        .orb1 {
+            width: 720px;
+            height: 720px;
+            background: #6366f1;
+            top: -20%;
+            left: -15%;
+        }
+
+        .orb2 {
+            width: 880px;
+            height: 880px;
+            background: #ec4899;
+            bottom: -25%;
+            right: -18%;
+            animation-delay: -16s;
+        }
+
+        .orb3 {
+            width: 580px;
+            height: 580px;
+            background: #22d3ee;
+            top: 30%;
+            right: -10%;
+            animation-delay: -24s;
+        }
+
+        @keyframes floatOrb {
+
+            0%,
+            100% {
+                transform: translate(0, 0) rotate(0deg);
+            }
+
+            50% {
+                transform: translate(60px, 80px) rotate(10deg);
+            }
+        }
+
+        .shell {
+            position: relative;
+            z-index: 2;
+            min-height: 100vh;
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            grid-template-rows: 76px 1fr;
+        }
+
+        /* Topbar - Fixed to top with no gap */
+        .topbar {
+            grid-column: 1 / -1;
+            background: rgba(255, 255, 255, 0.96);
+            border-bottom: 1px solid var(--glass-border);
+            padding: 0 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 76px;
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.08);
+            z-index: 10;
+            will-change: background-color;
+            backface-visibility: hidden;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: -0.8px;
+            color: var(--text);
+        }
+
+        .logo-icon {
+            width: 46px;
+            height: 46px;
+            background: var(--accent-gradient);
+            border-radius: 14px;
+            display: grid;
+            place-items: center;
+            font-size: 23px;
+            box-shadow: 0 12px 32px rgba(99, 102, 241, 0.35);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: rgba(255, 255, 255, 0.97);
+            border-right: 1px solid var(--glass-border);
+            padding: 32px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            will-change: background-color;
+            backface-visibility: hidden;
+        }
+
+        .nav-section-label {
+            font-size: 11px;
+            letter-spacing: 1.4px;
+            text-transform: uppercase;
+            color: var(--text2);
+            padding: 12px 18px 8px;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .nav-btn {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 15px 22px;
+            border-radius: 18px;
+            font-size: 15px;
+            font-weight: 500;
+            letter-spacing: -0.3px;
+            color: var(--text2);
+            transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+            border: 1px solid transparent;
+            will-change: background-color, color, transform, box-shadow;
+            backface-visibility: hidden;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            background: transparent;
+            appearance: none;
+            -webkit-appearance: none;
+            z-index: 10;
+        }
+
+        .nav-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: var(--accent-gradient);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            z-index: -1;
+        }
+
+        .nav-btn:hover {
+            color: #4f46e5;
+            background: rgba(99, 102, 241, 0.10);
+        }
+
+        .nav-btn.active {
+            color: white;
+            box-shadow: 0 12px 30px rgba(99, 102, 241, 0.28);
+        }
+
+        .nav-btn.active::before {
+            opacity: 1;
+        }
+
+        .nav-icon {
+            width: 24px;
+            height: 24px;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            color: var(--text2);
+            opacity: 0.7;
+            transition: opacity 0.3s ease, color 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .nav-btn:hover .nav-icon {
+            opacity: 1;
+            color: #4f46e5;
+            filter: drop-shadow(0 0 5px rgba(99, 102, 241, 0.5));
+        }
+
+        .nav-btn.active .nav-icon {
+            opacity: 1;
+            color: white;
+            filter: drop-shadow(0 0 5px rgba(99, 102, 241, 0.3));
+        }
+
+        /* Main Content */
+        .main {
+            padding: 36px 40px;
+            overflow-y: auto;
+            will-change: scroll-position;
+            backface-visibility: hidden;
+            contain: layout style;
+        }
+
+        .glass-panel {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow: 0 20px 50px rgba(99, 102, 241, 0.12);
+            transition: box-shadow 0.6s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            will-change: box-shadow, border-color;
+            backface-visibility: hidden;
+        }
+
+        .glass-panel:hover {
+            box-shadow: 0 28px 64px rgba(99, 102, 241, 0.20);
+            border-color: rgba(99, 102, 241, 0.25);
+        }
+
+        .glassmorphism {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(99, 102, 241, 0.18);
+            border-radius: 24px;
+            box-shadow: 0 20px 50px rgba(99, 102, 241, 0.12);
+            transition: background-color 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            will-change: background-color, transform;
+            backface-visibility: hidden;
+        }
+
+        .glassmorphism:hover {
+            background: rgba(255, 255, 255, 0.12);
+            filter: none !important;
+            transform: translateY(-2px);
+        }
+
+        .page-title {
+            font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: 36px;
+            font-weight: 700;
+            background: linear-gradient(90deg, #4f46e5, #7c3aed);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            -webkit-font-smoothing: antialiased;
+            backface-visibility: hidden;
+            letter-spacing: -0.8px;
+        }
+
+        .btn-primary {
+            background: var(--accent-gradient) !important;
+            color: white !important;
+            padding: 14px 28px;
+            border-radius: 16px;
+            font-weight: 600;
+            font-size: 15px;
+            letter-spacing: -0.3px;
+            box-shadow: 0 12px 30px rgba(99, 102, 241, 0.3) !important;
+            border: none !important;
+            cursor: pointer;
+            backface-visibility: hidden;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1) !important;
+            will-change: transform, box-shadow, background-image;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-gradient) !important;
+            color: white !important;
+            box-shadow: 0 12px 30px rgba(99, 102, 241, 0.3) !important;
+            opacity: inherit !important;
+        }
+
+        .btn-primary:active {
+            background: var(--accent-gradient) !important;
+            color: white !important;
+            box-shadow: 0 12px 30px rgba(99, 102, 241, 0.3) !important;
+            opacity: inherit !important;
+        }
+
+        .btn-primary:focus {
+            background: var(--accent-gradient) !important;
+            color: white !important;
+            box-shadow: 0 12px 30px rgba(99, 102, 241, 0.3) !important;
+            opacity: inherit !important;
+            outline: none !important;
+        }
+
+        .input-styled {
+            width: 100%;
+            padding: 18px 22px;
+            background: rgba(255, 255, 255, 0.92);
+            border: 1px solid rgba(99, 102, 241, 0.22);
+            border-radius: 16px;
+            font-size: 15px;
+            font-weight: 400;
+            letter-spacing: -0.3px;
+            font-family: 'Inter', sans-serif;
+            will-change: border-color, box-shadow;
+            backface-visibility: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .input-styled:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 5px rgba(99, 102, 241, 0.15);
+            outline: none;
+        }
+
+        /* Page Switching */
+        .page-container {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            pointer-events: none;
+        }
+
+        .page-container.active {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            margin: 0;
+            padding-top: 0;
+            align-items: flex-start;
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .page {
+            opacity: 0;
+            transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            transform: translateY(8px);
+            width: 100%;
+            visibility: hidden;
+        }
+
+        .page-container.active .page {
+            opacity: 1;
+            transform: translateY(0);
+            visibility: visible;
+        }
+
+        #notificationsContainer {
+            position: fixed;
+            bottom: 32px;
+            right: 32px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .toast {
+            min-width: 320px;
+        }
+
+        /* === DROPZONE LAYER SEPARATION === */
+        #dropZone {
+            position: relative;
+            transition: none;
+            will-change: auto;
+            backface-visibility: hidden;
+        }
+
+        #dropZone .dz-bg {
+            position: absolute;
+            inset: 0;
+            background: rgba(99, 102, 241, 0.05);
+            border-radius: 14px;
+            z-index: 0;
+            pointer-events: none;
+            transition: background-color 0.3s ease;
+            backface-visibility: hidden;
+            will-change: background-color;
+        }
+
+        #dropZone .dz-content {
+            position: relative;
+            z-index: 10;
+            -webkit-font-smoothing: antialiased;
+            backface-visibility: hidden;
+        }
+
+        #dropZone:hover .dz-bg {
+            background: rgba(99, 102, 241, 0.12);
+        }
+
+        /* Keep focus and active states on background layer */
+        #dropZone:active .dz-bg {
+            background: rgba(99, 102, 241, 0.15);
+        }
+
+        /* Settings Modal */
+        #settingsModal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 9998;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.3s ease;
+            opacity: 1;
+        }
+
+        #settingsModal.hidden {
+            display: none;
+            opacity: 0;
         }
     </style>
 </head>
-<body class="bg-gray-50">
-    <div class="min-h-screen flex">
-        <!-- Sidebar Navigation -->
-        <aside class="w-64 bg-gradient-to-b from-blue-600 to-blue-700 text-white shadow-lg fixed h-screen">
-            <div class="p-6 border-b border-blue-500">
-                <div class="flex items-center gap-2">
-                    <svg class="h-8 w-8" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2H4a1 1 0 110-2V4z"></path>
-                    </svg>
-                    <h1 class="text-2xl font-bold">FileHub</h1>
+
+<body>
+
+    <div class="bg-orbs">
+        <div class="orb orb1"></div>
+        <div class="orb orb2"></div>
+        <div class="orb orb3"></div>
+    </div>
+
+    <div class="shell">
+
+        <!-- Topbar -->
+        <header class="topbar">
+            <div class="logo">
+                <div class="logo-icon">📂</div>
+                FileHub
+            </div>
+            <div style="display:flex; align-items:center; gap:20px;">
+                <div id="statusBadge"
+                    style="display:flex; align-items:center; gap:7px; color:#10b981; font-weight:500;">
+                    <span
+                        style="width:9px;height:9px;background:#10b981;border-radius:50%;display:inline-block;"></span>
+                    Online
                 </div>
-                <p class="text-blue-100 text-sm mt-2">Secure File Management</p>
+                <button onclick="toggleSettings()" class="btn-primary">⚙ Settings</button>
             </div>
+        </header>
 
-            <!-- Navigation Menu -->
-            <nav class="p-4 space-y-2">
-                <button onclick="switchSection('upload')" class="nav-btn w-full text-left px-4 py-3 bg-blue-500 hover:bg-blue-400 rounded-lg flex items-center gap-3 transition active-nav">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-                    </svg>
-                    <span class="font-medium">Upload Files</span>
-                </button>
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="nav-section-label">MAIN</div>
 
-                <button onclick="switchSection('access')" class="nav-btn w-full text-left px-4 py-3 hover:bg-blue-500 rounded-lg flex items-center gap-3 transition">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-                    </svg>
-                    <span class="font-medium">Access Files</span>
-                </button>
+            <button class="nav-btn active" data-page="dashboard">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="3" width="7" height="7"></rect>
+                    <rect x="3" y="14" width="7" height="7"></rect>
+                    <rect x="14" y="14" width="7" height="7"></rect>
+                </svg>
+                Dashboard
+            </button>
 
-                <button id="segmentsBtn" onclick="switchSection('segments')" class="nav-btn w-full text-left px-4 py-3 hover:bg-blue-500 rounded-lg flex items-center gap-3 transition hidden">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path>
-                    </svg>
-                    <span class="font-medium">Segments 📊 (Admin Only)</span>
-                </button>
-            </nav>
+            <button class="nav-btn" data-page="upload">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                Upload Files
+            </button>
 
-            <!-- Footer Info -->
-            <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-blue-500 bg-blue-800 text-xs text-blue-100">
-                <p class="font-semibold mb-2">Status</p>
-                <p><span id="statusIndicator" class="text-green-300 font-bold">● Online</span></p>
-                <p class="text-blue-200 text-xs mt-2" id="serverInfo">server: localhost:5000</p>
-                <button onclick="toggleServerSettings()" class="mt-3 w-full px-2 py-1 bg-blue-600 hover:bg-blue-500 text-white text-xs rounded transition">
-                    ⚙️ Server Settings
-                </button>
-            </div>
+            <button class="nav-btn" data-page="access">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                    <path d="M12 13v-2m0 6v-2"></path>
+                    <circle cx="12" cy="12" r="1.5"></circle>
+                </svg>
+                Access File
+            </button>
+
+            <button class="nav-btn" data-page="browse">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                </svg>
+                File Browser
+            </button>
         </aside>
 
         <!-- Main Content -->
-        <main class="ml-64 w-full">
-            <!-- Header -->
-            <header class="bg-white border-b border-gray-200 sticky top-0 z-10 shadow-sm">
-                <div class="px-8 py-6">
-                    <h2 id="pageTitle" class="text-3xl font-bold text-gray-900">📤 Upload Files</h2>
-                    <p id="pageDescription" class="mt-2 text-gray-600">Upload your files to a segmented storage with a 2-digit ID</p>
+        <main class="main">
+
+            <!-- Dashboard Container -->
+            <div class="page-container active" id="dashboard-container">
+                <div class="page glass-panel" id="page-dashboard" style="padding:48px; max-width:900px; margin:0 auto;">
+                    <div style="text-align:center; margin-bottom:40px;">
+                        <svg style="width:78px; height:78px; margin:0 auto 16px; stroke-linecap:round; stroke-linejoin:round;"
+                            viewBox="0 0 24 24" fill="none" stroke="url(#gradient1)" stroke-width="2">
+                            <defs>
+                                <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" style="stop-color:#6366f1;stop-opacity:1" />
+                                    <stop offset="100%" style="stop-color:#a855f7;stop-opacity:1" />
+                                </linearGradient>
+                            </defs>
+                            <rect x="3" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="3" width="7" height="7"></rect>
+                            <rect x="3" y="14" width="7" height="7"></rect>
+                            <rect x="14" y="14" width="7" height="7"></rect>
+                        </svg>
+                        <div class="page-title">Dashboard</div>
+                        <p style="color:var(--text2); margin-top:10px; font-size:16.5px;">
+                            Welcome to FileHub - Secure Network File Sharing
+                        </p>
+                    </div>
+                    <div class="glass-panel glassmorphism" style="padding:44px;">
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:32px;">
+                            <div>
+                                <div
+                                    style="font-size:14px; color:var(--text2); text-transform:uppercase; letter-spacing:1px; margin-bottom:12px; font-weight:600;">
+                                    Total Uploads</div>
+                                <div style="font-size:48px; font-weight:700; color:var(--accent);">-</div>
+                            </div>
+                            <div>
+                                <div
+                                    style="font-size:14px; color:var(--text2); text-transform:uppercase; letter-spacing:1px; margin-bottom:12px; font-weight:600;">
+                                    System Status</div>
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <span
+                                        style="width:10px;height:10px;background:#10b981;border-radius:50%;display:inline-block;"></span>
+                                    <span style="color:#10b981; font-weight:600;">Online</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="margin-top:32px; padding-top:32px; border-top:1px solid var(--glass-border);">
+                            <div style="margin-bottom:20px; color:var(--text); font-weight:600;">Quick Actions</div>
+                            <div style="display:flex; gap:16px;">
+                                <button onclick="nav('upload', document.querySelectorAll('.nav-btn')[1])"
+                                    class="btn-primary">⬆ Start Upload</button>
+                                <button onclick="nav('access', document.querySelectorAll('.nav-btn')[2])"
+                                    class="btn-primary">🔑 Access Files</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </header>
+            </div>
 
-            <!-- Alerts Container -->
-            <div id="alertsContainer" class="px-8 pt-6 space-y-3"></div>
+            <!-- Upload Container -->
+            <div class="page-container" id="upload-container">
+                <div class="page glass-panel" id="page-upload" style="padding:48px; max-width:900px; margin:0 auto;">
+                    <!-- Header -->
+                    <div style="text-align:center; margin-bottom:40px;">
+                        <svg style="width:78px; height:78px; margin:0 auto 16px; stroke-linecap:round; stroke-linejoin:round;"
+                            viewBox="0 0 24 24" fill="none" stroke="url(#gradient2)" stroke-width="2">
+                            <defs>
+                                <linearGradient id="gradient2" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" style="stop-color:#6366f1;stop-opacity:1" />
+                                    <stop offset="100%" style="stop-color:#a855f7;stop-opacity:1" />
+                                </linearGradient>
+                            </defs>
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                        <div class="page-title">Upload Files</div>
+                        <p style="color:var(--text2); margin-top:10px; font-size:16.5px;">Share files securely with a unique
+                            Upload ID</p>
+                    </div>
 
-            <!-- Page Content -->
-            <div class="px-8 py-8">
+                    <!-- Main Card -->
+                    <div class="glass-panel glassmorphism" style="padding:44px;">
 
-                <!-- ============== UPLOAD SECTION ============== -->
-                <section id="uploadSection" class="bg-white rounded-lg border border-gray-200 shadow-sm p-8">
-
-
-                    <form id="uploadForm" class="space-y-6">
-                        <!-- Segment ID Input -->
-                        <div>
-                            <label for="segmentId" class="block text-sm font-medium text-gray-700 mb-2">
-                                Segment ID <span class="text-red-600">*</span>
-                            </label>
-                            <input
-                                type="number"
-                                id="segmentId"
-                                min="10"
-                                max="99"
-                                placeholder="Enter 2-digit ID (10-99)"
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-                                required
-                            >
-                            <p class="mt-1 text-xs text-gray-500">Must be a number between 10 and 99</p>
-                        </div>
-
-                        <!-- Upload Mode Toggle -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-3">Upload Mode</label>
-                            <div class="flex gap-4">
-                                <label class="flex items-center cursor-pointer">
-                                    <input
-                                        type="radio"
-                                        name="uploadMode"
-                                        value="all"
-                                        checked
-                                        class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                                    >
-                                    <span class="ml-2 text-gray-700">All Files/Folders</span>
-                                </label>
-                                <label class="flex items-center cursor-pointer">
-                                    <input
-                                        type="radio"
-                                        name="uploadMode"
-                                        value="filtered"
-                                        class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                                    >
-                                    <span class="ml-2 text-gray-700">Filtered Mode</span>
-                                </label>
-                            </div>
-                            <div id="filteredInfo" class="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800 hidden">
-                                <strong>Allowed file types:</strong> .jpg, .png, .img, .jpeg, .json, .geojson, .shp, .shx, .dbf
-                            </div>
-
-                            <!-- Format Selector (Filtered Mode Only) -->
-                            <div id="formatSelector" class="mt-4 hidden">
-                                <div class="flex items-center justify-between mb-3">
-                                    <label class="block text-sm font-medium text-gray-700">Select File Formats</label>
-                                    <button type="button" onclick="toggleAllFormats()" class="text-xs px-2 py-1 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded transition font-medium">
-                                        🔄 Toggle All
-                                    </button>
-                                </div>
-                                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-                                    <label class="flex items-center cursor-pointer">
-                                        <input type="checkbox" class="formatCheckbox" value=".jpg" checked data-accept="image/jpeg">
-                                        <span class="ml-2 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium transition hover:bg-blue-200">📷 JPG</span>
-                                    </label>
-                                    <label class="flex items-center cursor-pointer">
-                                        <input type="checkbox" class="formatCheckbox" value=".png" checked data-accept="image/png">
-                                        <span class="ml-2 px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium transition hover:bg-green-200">🖼️ PNG</span>
-                                    </label>
-                                    <label class="flex items-center cursor-pointer">
-                                        <input type="checkbox" class="formatCheckbox" value=".jpeg" checked data-accept="image/jpeg">
-                                        <span class="ml-2 px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium transition hover:bg-purple-200">📸 JPEG</span>
-                                    </label>
-                                    <label class="flex items-center cursor-pointer">
-                                        <input type="checkbox" class="formatCheckbox" value=".img" checked data-accept=".img">
-                                        <span class="ml-2 px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium transition hover:bg-yellow-200">💿 IMG</span>
-                                    </label>
-                                    <label class="flex items-center cursor-pointer">
-                                        <input type="checkbox" class="formatCheckbox" value=".json" checked data-accept="application/json">
-                                        <span class="ml-2 px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-medium transition hover:bg-orange-200">📄 JSON</span>
-                                    </label>
-                                    <label class="flex items-center cursor-pointer">
-                                        <input type="checkbox" class="formatCheckbox" value=".geojson" checked data-accept="application/geo+json">
-                                        <span class="ml-2 px-3 py-1 bg-teal-100 text-teal-700 rounded-full text-xs font-medium transition hover:bg-teal-200">★ GEOJSON</span>
-                                    </label>
-                                    <label class="flex items-center cursor-pointer">
-                                        <input type="checkbox" class="formatCheckbox" value=".shp" checked data-accept=".shp">
-                                        <span class="ml-2 px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium transition hover:bg-red-200">🗺️ SHP</span>
-                                    </label>
-                                    <label class="flex items-center cursor-pointer">
-                                        <input type="checkbox" class="formatCheckbox" value=".shx" checked data-accept=".shx">
-                                        <span class="ml-2 px-3 py-1 bg-pink-100 text-pink-700 rounded-full text-xs font-medium transition hover:bg-pink-200">📌 SHX</span>
-                                    </label>
-                                    <label class="flex items-center cursor-pointer">
-                                        <input type="checkbox" class="formatCheckbox" value=".dbf" checked data-accept=".dbf">
-                                        <span class="ml-2 px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-medium transition hover:bg-indigo-200">📊 DBF</span>
-                                    </label>
-                                </div>
-                                <p class="mt-2 text-xs text-gray-500">✓ Only selected formats will be allowed</p>
-                            </div>
-                        </div>
-
-                        <!-- File Input -->
-                        <div>
-                            <label for="fileInput" class="block text-sm font-medium text-gray-700 mb-2">
-                                Select Files or Folder <span class="text-red-600">*</span>
-                            </label>
-                            <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition"
-                                 id="dropZone">
-                                <svg id="uploadIcon" class="mx-auto h-12 w-12 text-gray-400 transition" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-12l-3.172-3.172a4 4 0 00-5.656 0L28 12m0 0l-3.172-3.172a4 4 0 00-5.656 0l-.172.172M28 12L12 28m0 0l3.172 3.172a4 4 0 005.656 0L28 28" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-                                </svg>
-                                <p id="uploadText" class="mt-2 text-sm text-gray-600">
-                                    <span class="font-semibold">Click to upload</span> or drag and drop
+                            <!-- Upload ID Input -->
+                            <div style="margin-bottom:32px;">
+                                <label
+                                    style="display:block; margin-bottom:12px; color:#1e2937; font-weight:600; font-size:15px;">Upload
+                                    ID <span style="color:#ef4444;">*</span></label>
+                                <input type="number" id="uploadSegmentId" min="10" max="99" class="input-styled"
+                                    placeholder="Enter ID (10-99)"
+                                    style="width:100%; padding:14px 16px; border:2px solid rgba(99,102,241,0.2); border-radius:14px; font-size:15px; font-family:Inter, sans-serif; transition:all 0.3s ease;"
+                                    onchange="validateUploadID()" oninput="validateUploadID()">
+                                <p id="idErrorMsg" style="color:#ef4444; font-size:12px; margin-top:8px; display:none;">
                                 </p>
-                                <p id="uploadSubtext" class="mt-1 text-xs text-gray-500">or choose a folder</p>
-                                <input
-                                    type="file"
-                                    id="fileInput"
-                                    multiple
-                                    class="hidden"
-                                    required
-                                >
+                                <p style="color:#64748b; font-size:13px; margin-top:8px; margin-bottom:0;">Upload ID
+                                    must be between 10 and 99</p>
                             </div>
-                            <div id="fileList" class="mt-3 text-sm text-gray-600"></div>
-                        </div>
 
-                        <!-- Folder Upload Option -->
-                        <div>
-                            <label class="flex items-center cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    id="folderMode"
-                                    class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                                >
-                                <span class="ml-2 text-gray-700">Upload entire folder</span>
-                            </label>
-                            <p class="mt-1 text-xs text-gray-500">Check this to select a folder instead of individual files</p>
-                        </div>
+                            <!-- Upload Mode Selection -->
+                            <div
+                                style="margin-bottom:32px; padding:24px; background:linear-gradient(135deg, rgba(99,102,241,0.05) 0%, rgba(6,182,212,0.05) 100%); border-radius:16px;">
+                                <label
+                                    style="display:block; margin-bottom:16px; color:#1e2937; font-weight:600; font-size:15px;">Upload
+                                    Mode</label>
+                                <div style="display:flex; flex-direction:column; gap:16px;">
+                                    <!-- Hidden radios for logic -->
+                                    <input type="radio" name="uploadMode" value="all" id="modeAll" checked
+                                        style="display:none;">
+                                    <input type="radio" name="uploadMode" value="filtered" id="modeFiltered"
+                                        style="display:none;">
 
-                        <!-- Submit Button -->
-                        <button
-                            type="submit"
-                            id="uploadBtn"
-                            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition flex items-center justify-center gap-2"
-                        >
-                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-                            </svg>
-                            Upload Files
-                        </button>
-                    </form>
-                </section>
+                                    <div style="display:flex; gap:12px;">
+                                        <button type="button" id="btnModeAll"
+                                            onclick="document.getElementById('modeAll').checked=true; handleUploadModeChange();"
+                                            style="flex:1; padding:14px 20px; border-radius:14px; font-size:14px; font-weight:600; font-family:'Inter', sans-serif; cursor:pointer; transition:all 0.3s ease; background:linear-gradient(135deg, #6366f1, #a855f7); color:white; border:2px solid #6366f1; box-shadow:0 8px 24px rgba(99,102,241,0.3);">
+                                            📁 All Files & Folders
+                                        </button>
+                                        <button type="button" id="btnModeFiltered"
+                                            onclick="document.getElementById('modeFiltered').checked=true; handleUploadModeChange();"
+                                            style="flex:1; padding:14px 20px; border-radius:14px; font-size:14px; font-weight:600; font-family:'Inter', sans-serif; cursor:pointer; transition:all 0.3s ease; background:white; color:#64748b; border:2px solid rgba(99,102,241,0.2);">
+                                            🔍 Filtered Mode
+                                        </button>
+                                    </div>
+                                </div>
 
-                <!-- Access Segment Section -->
-                <section id="accessSection" class="bg-white rounded-lg border border-gray-200 shadow-sm p-8 hidden">
-                    <form id="accessForm" class="space-y-6">
-                        <!-- Access Segment ID -->
-                        <div>
-                            <label for="accessSegmentId" class="block text-sm font-medium text-gray-700 mb-2">
-                                Enter Segment ID <span class="text-red-600">*</span>
-                            </label>
-                            <input
-                                type="number"
-                                id="accessSegmentId"
-                                min="10"
-                                max="99"
-                                placeholder="Enter 2-digit ID (10-99)"
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition"
-                                required
-                            >
-                        </div>
+                                <!-- Format Filter Checkboxes (hidden by default) -->
+                                <div id="formatFilterSection"
+                                    style="display:none; margin-top:20px; padding:20px; background:rgba(255,255,255,0.8); border:1px solid rgba(99,102,241,0.15); border-radius:14px;">
+                                    <div
+                                        style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                                        <span style="color:#1e2937; font-weight:600; font-size:14px;">📋 Select File
+                                            Formats</span>
+                                        <label
+                                            style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; color:#6366f1; font-weight:500;">
+                                            <input type="checkbox" id="selectAllFormats" checked
+                                                style="width:15px; height:15px; cursor:pointer; accent-color:#6366f1;"
+                                                onchange="toggleAllFormats()">
+                                            Select All
+                                        </label>
+                                    </div>
+                                    <div id="formatCheckboxes" style="display:flex; flex-direction:column; gap:14px;">
+                                        <div>
+                                            <div
+                                                style="font-size:11px; letter-spacing:1px; text-transform:uppercase; color:#6366f1; font-weight:700; margin-bottom:8px;">
+                                                🗺️ GIS / Vector</div>
+                                            <div style="display:flex; flex-wrap:wrap; gap:8px;">
+                                                <label
+                                                    style="display:flex; align-items:center; gap:6px; padding:6px 12px; background:rgba(99,102,241,0.06); border:1px solid rgba(99,102,241,0.12); border-radius:8px; cursor:pointer; font-size:13px; color:#1e2937; font-weight:500;"><input
+                                                        type="checkbox" value=".shp" checked
+                                                        style="width:14px; height:14px; accent-color:#6366f1; cursor:pointer;">.shp</label>
+                                                <label
+                                                    style="display:flex; align-items:center; gap:6px; padding:6px 12px; background:rgba(99,102,241,0.06); border:1px solid rgba(99,102,241,0.12); border-radius:8px; cursor:pointer; font-size:13px; color:#1e2937; font-weight:500;"><input
+                                                        type="checkbox" value=".shx" checked
+                                                        style="width:14px; height:14px; accent-color:#6366f1; cursor:pointer;">.shx</label>
+                                                <label
+                                                    style="display:flex; align-items:center; gap:6px; padding:6px 12px; background:rgba(99,102,241,0.06); border:1px solid rgba(99,102,241,0.12); border-radius:8px; cursor:pointer; font-size:13px; color:#1e2937; font-weight:500;"><input
+                                                        type="checkbox" value=".dbf" checked
+                                                        style="width:14px; height:14px; accent-color:#6366f1; cursor:pointer;">.dbf</label>
+                                                <label
+                                                    style="display:flex; align-items:center; gap:6px; padding:6px 12px; background:rgba(99,102,241,0.06); border:1px solid rgba(99,102,241,0.12); border-radius:8px; cursor:pointer; font-size:13px; color:#1e2937; font-weight:500;"><input
+                                                        type="checkbox" value=".prj" checked
+                                                        style="width:14px; height:14px; accent-color:#6366f1; cursor:pointer;">.prj</label>
+                                                <label
+                                                    style="display:flex; align-items:center; gap:6px; padding:6px 12px; background:rgba(99,102,241,0.06); border:1px solid rgba(99,102,241,0.12); border-radius:8px; cursor:pointer; font-size:13px; color:#1e2937; font-weight:500;"><input
+                                                        type="checkbox" value=".geojson" checked
+                                                        style="width:14px; height:14px; accent-color:#6366f1; cursor:pointer;">.geojson</label>
+                                                <label
+                                                    style="display:flex; align-items:center; gap:6px; padding:6px 12px; background:rgba(99,102,241,0.06); border:1px solid rgba(99,102,241,0.12); border-radius:8px; cursor:pointer; font-size:13px; color:#1e2937; font-weight:500;"><input
+                                                        type="checkbox" value=".json" checked
+                                                        style="width:14px; height:14px; accent-color:#6366f1; cursor:pointer;">.json</label>
+                                                <label
+                                                    style="display:flex; align-items:center; gap:6px; padding:6px 12px; background:rgba(99,102,241,0.06); border:1px solid rgba(99,102,241,0.12); border-radius:8px; cursor:pointer; font-size:13px; color:#1e2937; font-weight:500;"><input
+                                                        type="checkbox" value=".kml" checked
+                                                        style="width:14px; height:14px; accent-color:#6366f1; cursor:pointer;">.kml</label>
+                                                <label
+                                                    style="display:flex; align-items:center; gap:6px; padding:6px 12px; background:rgba(99,102,241,0.06); border:1px solid rgba(99,102,241,0.12); border-radius:8px; cursor:pointer; font-size:13px; color:#1e2937; font-weight:500;"><input
+                                                        type="checkbox" value=".kmz" checked
+                                                        style="width:14px; height:14px; accent-color:#6366f1; cursor:pointer;">.kmz</label>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div
+                                                style="font-size:11px; letter-spacing:1px; text-transform:uppercase; color:#10b981; font-weight:700; margin-bottom:8px;">
+                                                📊 Data</div>
+                                            <div style="display:flex; flex-wrap:wrap; gap:8px;">
+                                                <label
+                                                    style="display:flex; align-items:center; gap:6px; padding:6px 12px; background:rgba(16,185,129,0.06); border:1px solid rgba(16,185,129,0.12); border-radius:8px; cursor:pointer; font-size:13px; color:#1e2937; font-weight:500;"><input
+                                                        type="checkbox" value=".csv" checked
+                                                        style="width:14px; height:14px; accent-color:#10b981; cursor:pointer;">.csv</label>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div
+                                                style="font-size:11px; letter-spacing:1px; text-transform:uppercase; color:#f59e0b; font-weight:700; margin-bottom:8px;">
+                                                🛰️ Raster</div>
+                                            <div style="display:flex; flex-wrap:wrap; gap:8px;">
+                                                <label
+                                                    style="display:flex; align-items:center; gap:6px; padding:6px 12px; background:rgba(245,158,11,0.06); border:1px solid rgba(245,158,11,0.12); border-radius:8px; cursor:pointer; font-size:13px; color:#1e2937; font-weight:500;"><input
+                                                        type="checkbox" value=".tif" checked
+                                                        style="width:14px; height:14px; accent-color:#f59e0b; cursor:pointer;">.tif</label>
+                                                <label
+                                                    style="display:flex; align-items:center; gap:6px; padding:6px 12px; background:rgba(245,158,11,0.06); border:1px solid rgba(245,158,11,0.12); border-radius:8px; cursor:pointer; font-size:13px; color:#1e2937; font-weight:500;"><input
+                                                        type="checkbox" value=".tiff" checked
+                                                        style="width:14px; height:14px; accent-color:#f59e0b; cursor:pointer;">.tiff</label>
+                                                <label
+                                                    style="display:flex; align-items:center; gap:6px; padding:6px 12px; background:rgba(245,158,11,0.06); border:1px solid rgba(245,158,11,0.12); border-radius:8px; cursor:pointer; font-size:13px; color:#1e2937; font-weight:500;"><input
+                                                        type="checkbox" value=".jp2" checked
+                                                        style="width:14px; height:14px; accent-color:#f59e0b; cursor:pointer;">.jp2</label>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div
+                                                style="font-size:11px; letter-spacing:1px; text-transform:uppercase; color:#ec4899; font-weight:700; margin-bottom:8px;">
+                                                🖼️ Image</div>
+                                            <div style="display:flex; flex-wrap:wrap; gap:8px;">
+                                                <label
+                                                    style="display:flex; align-items:center; gap:6px; padding:6px 12px; background:rgba(236,72,153,0.06); border:1px solid rgba(236,72,153,0.12); border-radius:8px; cursor:pointer; font-size:13px; color:#1e2937; font-weight:500;"><input
+                                                        type="checkbox" value=".png" checked
+                                                        style="width:14px; height:14px; accent-color:#ec4899; cursor:pointer;">.png</label>
+                                                <label
+                                                    style="display:flex; align-items:center; gap:6px; padding:6px 12px; background:rgba(236,72,153,0.06); border:1px solid rgba(236,72,153,0.12); border-radius:8px; cursor:pointer; font-size:13px; color:#1e2937; font-weight:500;"><input
+                                                        type="checkbox" value=".jpg" checked
+                                                        style="width:14px; height:14px; accent-color:#ec4899; cursor:pointer;">.jpg</label>
+                                                <label
+                                                    style="display:flex; align-items:center; gap:6px; padding:6px 12px; background:rgba(236,72,153,0.06); border:1px solid rgba(236,72,153,0.12); border-radius:8px; cursor:pointer; font-size:13px; color:#1e2937; font-weight:500;"><input
+                                                        type="checkbox" value=".jpeg" checked
+                                                        style="width:14px; height:14px; accent-color:#ec4899; cursor:pointer;">.jpeg</label>
+                                                <label
+                                                    style="display:flex; align-items:center; gap:6px; padding:6px 12px; background:rgba(236,72,153,0.06); border:1px solid rgba(236,72,153,0.12); border-radius:8px; cursor:pointer; font-size:13px; color:#1e2937; font-weight:500;"><input
+                                                        type="checkbox" value=".webp" checked
+                                                        style="width:14px; height:14px; accent-color:#ec4899; cursor:pointer;">.webp</label>
+                                                <label
+                                                    style="display:flex; align-items:center; gap:6px; padding:6px 12px; background:rgba(236,72,153,0.06); border:1px solid rgba(236,72,153,0.12); border-radius:8px; cursor:pointer; font-size:13px; color:#1e2937; font-weight:500;"><input
+                                                        type="checkbox" value=".svg" checked
+                                                        style="width:14px; height:14px; accent-color:#ec4899; cursor:pointer;">.svg</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
 
-                        <!-- Access Button -->
-                        <button
-                            type="submit"
-                            class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg transition flex items-center justify-center gap-2"
-                        >
-                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-                            </svg>
-                            Access Segment
-                        </button>
-                    </form>
+                            <!-- Folder Upload Checkbox -->
+                            <div
+                                style="margin-bottom:32px; padding:16px; background:rgba(99,102,241,0.03); border:1px solid rgba(99,102,241,0.15); border-radius:14px;">
+                                <label style="display:flex; align-items:center; gap:12px; cursor:pointer;">
+                                    <input type="checkbox" id="folderUploadCheckbox"
+                                        style="width:18px; height:18px; cursor:pointer; accent-color:#6366f1;"
+                                        onchange="toggleFolderMode()">
+                                    <div>
+                                        <span style="color:#1e2937; font-weight:500; display:block;">Upload entire
+                                            folder</span>
+                                        <span
+                                            style="color:#64748b; font-size:12px; display:block; margin-top:4px;">Select
+                                            a complete folder to upload with all its contents</span>
+                                    </div>
+                                </label>
+                            </div>
 
-                    <!-- Files Display -->
-                    <div id="filesContainer" class="mt-6 hidden">
-                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Files in Segment <span id="displaySegmentId"></span></h3>
-                        <div id="filesList" class="space-y-2"></div>
+                            <!-- Drag & Drop Zone -->
+                            <div style="margin-bottom:32px;">
+                                <label
+                                    style="display:block; margin-bottom:16px; color:#1e2937; font-weight:600; font-size:15px;">Select
+                                    Files</label>
+                                <div id="dropZone"
+                                    style="position:relative; border:2px dashed #6366f1; border-radius:16px; padding:48px 32px; text-align:center; cursor:pointer; background:linear-gradient(135deg, rgba(99,102,241,0.05) 0%, rgba(6,182,212,0.05) 100%); transition:all 0.3s ease;"
+                                    onmouseover="this.style.borderColor='#06b6d4'; this.style.boxShadow='0 0 0 3px rgba(6,182,212,0.1)'"
+                                    onmouseout="this.style.borderColor='#6366f1'; this.style.boxShadow='none'">
+                                    <svg style="width:56px; height:56px; margin:0 auto 16px; color:#6366f1;"
+                                        xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 16 16"
+                                        fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <path
+                                            d="M8 2c-1 0-2 .5-2.5 1.5M13 6c.5 1 .5 2.5 0 4M8 14c1 0 2-.5 2.5-1.5m-9-2c-.5-1-.5-2.5 0-4M8 2v8m-4-4l4 4 4-4">
+                                        </path>
+                                    </svg>
+                                    <div style="color:#1e2937; font-weight:600; font-size:16px; margin-bottom:8px;">Drag
+                                        files here or click</div>
+                                    <div style="color:#64748b; font-size:13px;">Choose files from your device or drag
+                                        them here</div>
+                                </div>
+                                <input type="file" id="fileInput" multiple style="display:none;">
+                                <input type="file" id="folderInput" webkitdirectory directory multiple
+                                    style="display:none;">
+
+                                <!-- File List -->
+                                <div id="fileList" style="margin-top:20px;">
+                                    <div id="fileListContainer" style="display:none;">
+                                        <div
+                                            style="padding:12px 16px; background:rgba(99,102,241,0.05); border-radius:12px; margin-bottom:12px;">
+                                            <label style="display:flex; align-items:center; gap:10px; cursor:pointer;">
+                                                <input type="checkbox" id="selectAllFiles"
+                                                    style="width:16px; height:16px; cursor:pointer; accent-color:#6366f1;"
+                                                    onchange="toggleSelectAllFiles()">
+                                                <span style="font-weight:600; color:#1e2937; font-size:13px;">Select /
+                                                    Deselect All</span>
+                                                <span id="filesCountLabel"
+                                                    style="color:#64748b; font-size:12px; margin-left:auto;"></span>
+                                            </label>
+                                        </div>
+                                        <div id="filesCheckboxList"
+                                            style="max-height:280px; overflow-y:auto; display:flex; flex-direction:column; gap:8px;">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Progress Bar -->
+                            <div id="progressContainer" style="display:none; margin-bottom:24px;">
+                                <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
+                                    <span style="color:#1e2937; font-weight:500; font-size:13px;">Uploading...</span>
+                                    <span id="progressPercent"
+                                        style="color:#6366f1; font-weight:600; font-size:13px;">0%</span>
+                                </div>
+                                <div
+                                    style="width:100%; height:8px; background:rgba(99,102,241,0.1); border-radius:10px; overflow:hidden;">
+                                    <div id="progressBar"
+                                        style="height:100%; background:linear-gradient(90deg, #6366f1, #06b6d4); width:0%; transition:width 0.3s ease;">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Upload Button -->
+                            <button id="uploadBtn" onclick="uploadFiles()"
+                                style="width:100%; padding:16px; background:linear-gradient(135deg, #5a5df7, #00bcdd); color:white; border:none; border-radius:14px; font-size:15px; font-weight:600; cursor:pointer; transition:all 0.3s ease; opacity:0.5; pointer-events:none; box-shadow:0 4px 15px rgba(99,102,241,0.3);"
+                                onmouseover="this.style.opacity='1'; this.style.boxShadow='0 8px 25px rgba(99,102,241,0.4)'"
+                                onmouseout="this.style.opacity='0.5'; this.style.boxShadow='0 4px 15px rgba(99,102,241,0.3)'">
+                                <span id="uploadBtnText">⬆ Select ID and Files to Upload</span>
+                            </button>
+
+                            <p
+                                style="color:#64748b; font-size:12px; text-align:center; margin-top:16px; margin-bottom:0;">
+                                Maximum file size: 500MB per file
+                            </p>
                     </div>
-                </section>
+                </div>
             </div>
 
-                <!-- ============== SEGMENTS SECTION ============== -->
-                <section id="segmentsSection" class="bg-white rounded-lg border border-gray-200 shadow-sm p-8 hidden">
-                    <h3 class="text-2xl font-bold text-gray-900 mb-6">Available Segments</h3>
-                    <div id="segmentsOverview" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <div class="text-center py-8 col-span-full">
-                            <p class="text-gray-500">Loading segments...</p>
+            <!-- Access Container -->
+            <div class="page-container" id="access-container">
+                <div class="page glass-panel" id="page-access" style="padding:48px; max-width:680px; margin:0 auto;">
+                    <div style="text-align:center; margin-bottom:40px;">
+                        <svg style="width:78px; height:78px; margin:0 auto 16px; stroke-linecap:round; stroke-linejoin:round;"
+                            viewBox="0 0 24 24" fill="none" stroke="url(#gradient3)" stroke-width="2">
+                            <defs>
+                                <linearGradient id="gradient3" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" style="stop-color:#6366f1;stop-opacity:1" />
+                                    <stop offset="100%" style="stop-color:#a855f7;stop-opacity:1" />
+                                </linearGradient>
+                            </defs>
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                            <path d="M12 13v-2m0 6v-2"></path>
+                            <circle cx="12" cy="12" r="1.5"></circle>
+                        </svg>
+                        <div class="page-title">Access File</div>
+                        <p style="color:var(--text2); margin-top:10px; font-size:16.5px;">Enter the Upload ID to
+                            securely access shared files</p>
+                    </div>
+                    <div class="glass-panel glassmorphism" style="padding:44px;">
+                        <div style="display:flex; gap:16px; margin-bottom:24px;">
+                            <input type="text" id="accessSegmentId" class="input-styled"
+                                placeholder="Enter Upload ID (e.g. 42)">
+                            <button id="accessFilesBtn" class="btn-primary" style="white-space:nowrap;">Access
+                                Files</button>
+                        </div>
+                        <div id="filesContainer" style="display:none; padding-top:24px; border-top:1px solid rgba(99,102,241,0.18);">
+                            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                                <div>Upload ID: <span id="displaySegmentId" style="font-weight:700; color:#6366f1;"></span>
+                                </div>
+                                <button onclick="this.closest('#filesContainer').style.display='none'"
+                                    style="background:none; border:none; color:#ef4444; font-size:22px; cursor:pointer;">✕</button>
+                            </div>
+                            <div id="filesList"></div>
                         </div>
                     </div>
-                </section>
+                </div>
             </div>
+
+            <!-- Browse Container -->
+            <div class="page-container" id="browse-container">
+                <div class="page glass-panel" id="page-browse" style="padding:48px; max-width:900px; margin:0 auto;">
+                    <div style="text-align:center; margin-bottom:40px;">
+                        <svg style="width:78px; height:78px; margin:0 auto 16px; stroke-linecap:round; stroke-linejoin:round;"
+                            viewBox="0 0 24 24" fill="none" stroke="url(#gradient4)" stroke-width="2">
+                            <defs>
+                                <linearGradient id="gradient4" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" style="stop-color:#6366f1;stop-opacity:1" />
+                                    <stop offset="100%" style="stop-color:#a855f7;stop-opacity:1" />
+                                </linearGradient>
+                            </defs>
+                            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z">
+                            </path>
+                        </svg>
+                        <div class="page-title">File Browser</div>
+                        <p style="color:var(--text2); margin-top:10px; font-size:16.5px;">View all files from uploads
+                            (read-only)</p>
+                    </div>
+                    <div class="glass-panel glassmorphism" style="padding:44px;">
+                        <div id="liveSegments" style="display:flex; flex-direction:column; gap:20px;">
+                            <div style="text-align:center; padding:20px; color:var(--text2);">Loading uploads...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </main>
-    </div>
 
-
-
-    <!-- Server Settings Modal -->
-    <div id="serverModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-        <div class="bg-white rounded-lg p-6 w-96 shadow-xl">
-            <h3 class="text-lg font-bold text-gray-900 mb-4">⚙️ Server Settings</h3>
-            
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Current Connection</label>
-                    <div id="currentServerDisplay" class="p-3 bg-green-50 border border-green-200 rounded text-sm font-mono text-green-800">
-                        http://localhost:5000/api
-                    </div>
+        <!-- Settings Modal -->
+        <div id="settingsModal" class="hidden">
+            <div
+                style="background:white; border-radius:24px; padding:48px; max-width:500px; width:90%; box-shadow:0 20px 60px rgba(99,102,241,0.3);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:32px;">
+                    <h2 style="font-size:24px; font-weight:700; color:#1e2937; margin:0;">⚙ Settings</h2>
+                    <button onclick="toggleSettings()"
+                        style="background:none; border:none; font-size:28px; cursor:pointer; color:#64748b;">✕</button>
                 </div>
 
-                <div>
-                    <label for="serverIPInput" class="block text-sm font-medium text-gray-700 mb-1">Server IP/Hostname</label>
-                    <input type="text" id="serverIPInput" placeholder="e.g., 192.168.140.26 or localhost" 
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
-                    <p class="mt-1 text-xs text-gray-500">Leave blank to use auto-detected IP</p>
+                <div style="margin-bottom:24px;">
+                    <label style="display:block; margin-bottom:8px; color:#1e2937; font-weight:600;">Server IP
+                        Address</label>
+                    <input type="text" id="customServerIP" class="input-styled" placeholder="e.g. 192.168.1.100"
+                        value="">
+                    <p style="color:#64748b; font-size:14px; margin-top:8px;">Your backend server IP (port 5000)</p>
                 </div>
 
-                <div class="bg-blue-50 border border-blue-200 rounded p-3">
-                    <p class="text-xs text-blue-800">
-                        <strong>Auto-Detection:</strong> The system automatically detects the server IP from the URL you're accessing. 
-                        Only change this if auto-detection doesn't work.
-                    </p>
+                <div style="margin-bottom:32px;">
+                    <label style="display:block; margin-bottom:8px; color:#1e2937; font-weight:600;">API
+                        Endpoint</label>
+                    <input type="text" id="apiEndpointInput" class="input-styled"
+                        placeholder="e.g. http://192.168.1.100:5000/api" value="">
+                    <p style="color:#64748b; font-size:14px; margin-top:8px;">Full API URL</p>
                 </div>
 
-                <div class="bg-purple-50 border border-purple-200 rounded p-3">
-                    <p class="text-xs font-semibold text-purple-900 mb-2">🌐 Live Server on Local Network</p>
-                    <div class="flex items-center justify-between">
-                        <span id="liveServerStatus" class="text-xs text-purple-800 font-medium">Status: <span id="liveServerStatusText" class="font-bold">Checking...</span></span>
-                        <button onclick="toggleLiveServer()" id="liveServerBtn" class="px-4 py-1 bg-red-600 hover:bg-red-700 text-white text-xs rounded transition font-medium">
-                            OFF
-                        </button>
-                    </div>
-                </div>
-
-                <div class="flex gap-2">
-                    <button onclick="saveServerSettings()" class="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition font-medium">
-                        Save
-                    </button>
-                    <button onclick="resetServerSettings()" class="flex-1 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded transition font-medium">
-                        Reset
-                    </button>
-                    <button onclick="toggleServerSettings()" class="flex-1 px-4 py-2 bg-gray-400 hover:bg-gray-500 text-white rounded transition font-medium">
-                        Close
-                    </button>
+                <div style="display:flex; gap:16px;">
+                    <button onclick="saveSettings()" class="btn-primary" style="flex:1;">✓ Save</button>
+                    <button onclick="toggleSettings()"
+                        style="flex:1; background:rgba(99,102,241,0.1); border:none; color:#6366f1; padding:14px 28px; border-radius:16px; font-weight:600; cursor:pointer;">Close</button>
                 </div>
             </div>
         </div>
     </div>
 
+    <div id="notificationsContainer"></div>
+
+    <!-- Debug Console -->
+    <div id="debugConsole"
+        style="position: fixed; bottom: 0; right: 0; width: 400px; max-height: 300px; background: #1e1e1e; color: #d4d4d4; font-family: 'Courier New', monospace; font-size: 11px; overflow-y: auto; border: 1px solid #444; border-radius: 8px 8px 0 0; z-index: 99999; display: none; padding: 10px; gap: 5px;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+            <span style="font-weight: bold;">📋 Debug Console</span>
+            <button onclick="document.getElementById('debugConsole').style.display='none'"
+                style="background: none; border: none; color: #d4d4d4; cursor: pointer;">×</button>
+        </div>
+        <div id="debugLogs" style="display: flex; flex-direction: column; gap: 5px;"></div>
+    </div>
+    <button id="debugToggle"
+        onclick="document.getElementById('debugConsole').style.display = document.getElementById('debugConsole').style.display === 'none' ? 'flex' : 'none'; document.getElementById('debugConsole').style.flexDirection = 'column';"
+        style="position: fixed; bottom: 10px; right: 10px; background: #6366f1; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; z-index: 99998; font-size: 12px; font-weight: bold;">🐛
+        Debug</button>
+
     <script>
-        let currentSection = 'upload';
+        // Global error handler
+        window.addEventListener('error', function (event) {
+            console.error('❌ Global Error:', event.error);
+            addDebugLog('❌ ERROR: ' + event.message, 'error');
+        });
 
-        // ============ AUTO-CONFIGURATION ============
-        // Automatically detects the server IP from the URL being accessed
-        // If accessed from http://192.168.140.26:8000 → API = http://192.168.140.26:5000
-        // If accessed from http://localhost:8000 → API = http://localhost:5000
-        
-        const getServerHost = () => {
-            // Use the same hostname/IP that the page was accessed from
-            const currentHost = window.location.hostname;
-            // Override with localStorage if manually set
-            const saved = localStorage.getItem('serverIP');
-            return saved || currentHost;
+        window.addEventListener('unhandledrejection', function (event) {
+            console.error('❌ Unhandled Promise:', event.reason);
+            addDebugLog('❌ PROMISE ERROR: ' + event.reason, 'error');
+        });
+
+        function addDebugLog(message, type = 'log') {
+            const debugLogs = document.getElementById('debugLogs');
+            if (debugLogs) {
+                const logEntry = document.createElement('div');
+                const timestamp = new Date().toLocaleTimeString();
+                const color = type === 'error' ? '#ff6b6b' : type === 'warn' ? '#ffd93d' : '#51cf66';
+                logEntry.style.cssText = `color: ${color}; padding: 4px; border-left: 2px solid ${color}; padding-left: 8px;`;
+                logEntry.textContent = `[${timestamp}] ${message}`;
+                debugLogs.appendChild(logEntry);
+                debugLogs.scrollTop = debugLogs.scrollHeight;
+            }
+        }
+
+        // Override console methods to capture logs
+        const originalLog = console.log;
+        const originalError = console.error;
+        const originalWarn = console.warn;
+
+        console.log = function (...args) {
+            originalLog.apply(console, args);
+            addDebugLog(args.join(' '), 'log');
         };
-        
-        const SERVER_IP = getServerHost();
-        const API_URL = `http://${SERVER_IP}:5000/api`;
 
-        // ============ SERVER SETTINGS FUNCTIONS ============
-        function updateServerDisplay() {
-            document.getElementById('serverInfo').textContent = `server: ${SERVER_IP}:5000`;
-            document.getElementById('currentServerDisplay').textContent = API_URL;
-            document.getElementById('serverIPInput').value = localStorage.getItem('serverIP') || '';
-        }
+        console.error = function (...args) {
+            originalError.apply(console, args);
+            addDebugLog(args.join(' '), 'error');
+        };
 
-        function toggleServerSettings() {
-            document.getElementById('serverModal').classList.toggle('hidden');
-        }
+        console.warn = function (...args) {
+            originalWarn.apply(console, args);
+            addDebugLog(args.join(' '), 'warn');
+        };
 
-        function saveServerSettings() {
-            const customIP = document.getElementById('serverIPInput').value.trim();
-            if (customIP) {
-                localStorage.setItem('serverIP', customIP);
-                showAlert('success', 'Settings Saved', 'Server IP updated. Reloading page...');
-                setTimeout(() => window.location.reload(), 1500);
-            } else {
-                localStorage.removeItem('serverIP');
-                showAlert('success', 'Settings Reset', 'Using auto-detected server IP. Reloading page...');
-                setTimeout(() => window.location.reload(), 1500);
-            }
-        }
-
-        function resetServerSettings() {
-            if (confirm('Reset to auto-detected server IP?')) {
-                localStorage.removeItem('serverIP');
-                document.getElementById('serverIPInput').value = '';
-                showAlert('success', 'Reset Complete', 'Reloading page...');
-                setTimeout(() => window.location.reload(), 1500);
-            }
-        }
-
-        // ============ LIVE SERVER ON/OFF TOGGLE ============
-        function checkLiveServerStatus() {
-            // Check if backend is responding on port 5000
-            axios.get(`http://${SERVER_IP}:5000/api/health`, { timeout: 2000 })
-                .then(() => {
-                    // Server is running
-                    document.getElementById('liveServerStatusText').textContent = 'ON ✅';
-                    document.getElementById('liveServerBtn').textContent = 'ON';
-                    document.getElementById('liveServerBtn').className = 'px-4 py-1 bg-green-600 hover:bg-green-700 text-white text-xs rounded transition font-medium';
-                })
-                .catch(() => {
-                    // Server is not running
-                    document.getElementById('liveServerStatusText').textContent = 'OFF';
-                    document.getElementById('liveServerBtn').textContent = 'OFF';
-                    document.getElementById('liveServerBtn').className = 'px-4 py-1 bg-red-600 hover:bg-red-700 text-white text-xs rounded transition font-medium';
-                });
-        }
-
-        function toggleLiveServer() {
-            const status = document.getElementById('liveServerStatusText').textContent;
-            
-            if (status.includes('OFF')) {
-                // Server is OFF - show how to turn it ON
-                alert(`🚀 To start Live Server on Local Network:
-
-1️⃣  Open start.bat from file explorer
-   OR run these commands in terminal:
-
-   Terminal 1:
-   cd c:\\Users\\USER\\Desktop\\Qgis-tools-main\\file_collect
-   python backend/app.py
-
-   Terminal 2:
-   cd c:\\Users\\USER\\Desktop\\Qgis-tools-main\\file_collect\\frontend
-   python -m http.server 8000
-
-2️⃣  After starting both terminals, refresh this page
-
-✅ Access from:
-   Your PC: http://localhost:8000
-   Other PCs: http://192.168.140.26:8000`);
-            } else {
-                // Server is ON - show how to stop
-                alert(`⏹️  To stop Live Server:
-
-Close both terminal windows:
-  • Close Backend terminal (Ctrl+C)
-  • Close Frontend terminal (Ctrl+C)
-
-Then refresh this page.`);
-            }
-        }
-
-        // ============ HOST PC CHECK - SHOW SEGMENTS ONLY TO ADMIN ============
-        function checkIfHostPC() {
-            const currentHost = window.location.hostname;
-            // Show Segments button only if accessing from localhost or host IP directly
-            const isHostPC = currentHost === 'localhost' || currentHost === '127.0.0.1';
-            
-            const segmentsBtn = document.getElementById('segmentsBtn');
-            if (isHostPC) {
-                segmentsBtn.classList.remove('hidden');
-            } else {
-                segmentsBtn.classList.add('hidden');
-            }
-        }
-
-        // Section switching
-        function switchSection(section) {
-            currentSection = section;
-            
-            // Hide all sections
-            document.getElementById('uploadSection').classList.add('hidden');
-            document.getElementById('accessSection').classList.add('hidden');
-            document.getElementById('segmentsSection').classList.add('hidden');
-            
-            // Remove active class from all nav buttons
-            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active-nav', 'bg-blue-500'));
-            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.add('hover:bg-blue-500'));
-            
-            // Show selected section and update nav
-            if (section === 'upload') {
-                document.getElementById('uploadSection').classList.remove('hidden');
-                document.querySelectorAll('.nav-btn')[0].classList.add('active-nav', 'bg-blue-500');
-                document.getElementById('pageTitle').textContent = '📤 Upload Files';
-                document.getElementById('pageDescription').textContent = 'Upload your files to a segmented storage with a 2-digit ID';
-            } else if (section === 'access') {
-                document.getElementById('accessSection').classList.remove('hidden');
-                document.querySelectorAll('.nav-btn')[1].classList.add('active-nav', 'bg-blue-500');
-                document.getElementById('pageTitle').textContent = '🔓 Access Files';
-                document.getElementById('pageDescription').textContent = 'Enter a segment ID to view and download files';
-            } else if (section === 'segments') {
-                document.getElementById('segmentsSection').classList.remove('hidden');
-                document.querySelectorAll('.nav-btn')[2].classList.add('active-nav', 'bg-blue-500');
-                document.getElementById('pageTitle').textContent = '📊 Segments Overview';
-                document.getElementById('pageDescription').textContent = 'View all available file segments and their contents';
-                loadSegments();
-            }
-        }
-
-        // Utility function to show alerts
-        function showAlert(type, title, message) {
-            const container = document.getElementById('alertsContainer');
-            const alertId = `alert-${Date.now()}`;
-            
-            const bgColor = type === 'success' ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200';
-            const textColor = type === 'success' ? 'text-green-800' : 'text-red-800';
-            const iconColor = type === 'success' ? 'text-green-600' : 'text-red-600';
-            
-            const alert = document.createElement('div');
-            alert.id = alertId;
-            alert.className = `${bgColor} border rounded-lg p-4 flex gap-3`;
-            alert.innerHTML = `
-                <svg class="h-5 w-5 flex-shrink-0 ${iconColor}" fill="currentColor" viewBox="0 0 20 20">
-                    ${type === 'success' 
-                        ? '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>' 
-                        : '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>'}
-                </svg>
-                <div class="flex-1">
-                    <h3 class="font-semibold ${textColor}">${title}</h3>
-                    <p class="${textColor} text-sm mt-1">${message}</p>
-                </div>
-                <button onclick="document.getElementById('${alertId}').remove()" class="${textColor} hover:opacity-70">
-                    <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
-                    </svg>
-                </button>
-            `;
-            
-            container.appendChild(alert);
-            
-            // Auto-remove after 6 seconds
-            setTimeout(() => {
-                const elem = document.getElementById(alertId);
-                if (elem) elem.remove();
-            }, 6000);
-        }
-
-        // File input handling
-        const fileInput = document.getElementById('fileInput');
-        const dropZone = document.getElementById('dropZone');
-        const folderModeCheckbox = document.getElementById('folderMode');
-
-        dropZone.addEventListener('click', () => {
-            fileInput.click();
-        });
-
-        folderModeCheckbox.addEventListener('change', (e) => {
-            if (e.target.checked) {
-                fileInput.webkitdirectory = true;
-                fileInput.mozdirectory = true;
-            } else {
-                fileInput.webkitdirectory = false;
-                fileInput.mozdirectory = false;
-            }
-        });
-
-        fileInput.addEventListener('change', () => {
-            updateFileList();
-            updateDropzoneText();
-        });
-        
-        dropZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            dropZone.classList.add('bg-blue-50', 'border-blue-400');
-        });
-        
-        dropZone.addEventListener('dragleave', () => {
-            dropZone.classList.remove('bg-blue-50', 'border-blue-400');
-        });
-        
-        dropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('bg-blue-50', 'border-blue-400');
-            
-            if (e.dataTransfer.items) {
-                fileInput.files = e.dataTransfer.files;
-                updateFileList();
-                updateDropzoneText();  // Update visual feedback for drag & drop
-            }
-        });
-
-        // ============ DYNAMIC FILE SELECTION FEEDBACK ============
-        function updateDropzoneText() {
-            const uploadText = document.getElementById('uploadText');
-            const uploadSubtext = document.getElementById('uploadSubtext');
-            const uploadIcon = document.getElementById('uploadIcon');
-            const count = fileInput.files.length;
-            
-            if (count > 0) {
-                // Files are selected - show blue, bold feedback
-                let displayText = '';
-                
-                if (count === 1) {
-                    // Single file - show filename
-                    displayText = `✅ ${fileInput.files[0].name}`;
-                } else {
-                    // Multiple files - show count
-                    displayText = `✅ ${count} items selected`;
-                }
-                
-                uploadText.innerHTML = `<span class="font-bold text-blue-600">${displayText}</span>`;
-                uploadSubtext.textContent = 'Ready to upload';
-                uploadSubtext.className = 'mt-1 text-xs text-blue-500 font-medium';
-                uploadIcon.className = 'mx-auto h-12 w-12 text-blue-500 transition';
-            } else {
-                // No files selected - show default state
-                uploadText.innerHTML = '<span class="font-semibold">Click to upload</span> or drag and drop';
-                uploadSubtext.textContent = 'or choose a folder';
-                uploadSubtext.className = 'mt-1 text-xs text-gray-500';
-                uploadIcon.className = 'mx-auto h-12 w-12 text-gray-400 transition';
-            }
-        }
-
-        function updateFileList() {
-            const fileList = document.getElementById('fileList');
-            const count = fileInput.files.length;
-            if (count > 0) {
-                fileList.innerHTML = `<p class="text-green-600 font-medium">✓ ${count} file(s) selected</p>`;
-            } else {
-                fileList.innerHTML = '';
-            }
-        }
-
-        // ============ FORMAT SELECTOR FUNCTIONS ============
-        function updateAcceptAttribute() {
-            const checkedFormats = Array.from(document.querySelectorAll('.formatCheckbox:checked')).map(cb => cb.value).join(',');
-            fileInput.accept = checkedFormats || '.jpg,.png,.img,.jpeg,.json,.geojson,.shp,.shx,.dbf';
-        }
-
-        function toggleAllFormats() {
-            const checkboxes = document.querySelectorAll('.formatCheckbox');
-            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
-            checkboxes.forEach(cb => cb.checked = !allChecked);
-            updateAcceptAttribute();
-        }
-
-        // Add event listeners to all format checkboxes
-        document.querySelectorAll('.formatCheckbox').forEach(checkbox => {
-            checkbox.addEventListener('change', updateAcceptAttribute);
-        });
-
-        // Initialize accept attribute on load
-        updateAcceptAttribute();
-
-        // Upload mode toggle
-        document.querySelectorAll('input[name="uploadMode"]').forEach(radio => {
-            radio.addEventListener('change', (e) => {
-                const filteredInfo = document.getElementById('filteredInfo');
-                const formatSelector = document.getElementById('formatSelector');
-                if (e.target.value === 'filtered') {
-                    filteredInfo.classList.remove('hidden');
-                    formatSelector.classList.remove('hidden');
-                    updateAcceptAttribute();  // Set accept to filtered formats
-                } else {
-                    filteredInfo.classList.add('hidden');
-                    formatSelector.classList.add('hidden');
-                    fileInput.accept = '';  // Allow all files in all-files mode
-                }
-            });
-        });
-
-        // Upload Form Handler
-        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const segmentId = document.getElementById('segmentId').value;
-            const uploadMode = document.querySelector('input[name="uploadMode"]:checked').value;
-            const files = fileInput.files;
-
-            if (!segmentId || !files.length) {
-                showAlert('error', 'Validation Error', 'Please enter a segment ID and select files.');
-                return;
-            }
-
-            const formData = new FormData();
-            formData.append('segment_id', segmentId);
-            formData.append('upload_mode', uploadMode);
-            
-            for (let file of files) {
-                formData.append('files', file, file.webkitRelativePath || file.name);
-            }
-
-            const uploadBtn = document.getElementById('uploadBtn');
-            uploadBtn.disabled = true;
-            uploadBtn.innerHTML = '<svg class="h-5 w-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg> Uploading...';
-
-            try {
-                const response = await axios.post(`${API_URL}/upload`, formData, {
-                    headers: { 'Content-Type': 'multipart/form-data' }
-                });
-
-                showAlert('success', 'Upload Successful!', `${response.data.uploaded_files.length} file(s) uploaded to segment ${segmentId}`);
-                
-                document.getElementById('uploadForm').reset();
-                fileInput.value = '';
-                updateFileList();
-                folderModeCheckbox.checked = false;
-                
-                if (currentSection === 'segments') {
-                    loadSegments();
-                }
-            } catch (error) {
-                const message = error.response?.data?.error || 'Upload failed. Please try again.';
-                showAlert('error', 'Upload Failed', message);
-            } finally {
-                uploadBtn.disabled = false;
-                uploadBtn.innerHTML = '<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg> Upload Files';
-            }
-        });
-
-        // Access Form Handler
-        document.getElementById('accessForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const segmentId = document.getElementById('accessSegmentId').value;
-
-            try {
-                const response = await axios.get(`${API_URL}/access-segment/${segmentId}`);
-                displayFiles(response.data.files, segmentId);
-                showAlert('success', 'Access Granted', `Segment ${segmentId} accessed successfully`);
-            } catch (error) {
-                const message = error.response?.data?.error || 'Failed to access segment. Please try again.';
-                showAlert('error', 'Access Denied', message);
-                document.getElementById('filesContainer').classList.add('hidden');
-            }
-        });
-
-        function displayFiles(files, segmentId) {
-            const filesContainer = document.getElementById('filesContainer');
-            const filesList = document.getElementById('filesList');
-            const displaySegmentId = document.getElementById('displaySegmentId');
-
-            displaySegmentId.textContent = segmentId;
-            filesList.innerHTML = '';
-
-            function renderFileTree(items, parentPath = '') {
-                items.forEach(item => {
-                    if (item.type === 'file') {
-                        const fileSize = (item.size / 1024).toFixed(2);
-                        const fileDiv = document.createElement('div');
-                        fileDiv.className = 'flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200 hover:border-gray-300';
-                        fileDiv.innerHTML = `
-                            <div class="flex items-center flex-1 min-w-0">
-                                <svg class="h-5 w-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                </svg>
-                                <div class="ml-3 min-w-0">
-                                    <p class="text-sm font-medium text-gray-900 truncate">${item.name}</p>
-                                    <p class="text-xs text-gray-500">${fileSize} KB</p>
-                                </div>
-                            </div>
-                            <button class="ml-2 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded transition flex-shrink-0"
-                                    onclick="downloadFile('${segmentId}', '${item.path.replace(/\\/g, '/')}')">
-                                Download
-                            </button>
-                        `;
-                        filesList.appendChild(fileDiv);
-                    } else if (item.type === 'folder' && item.children) {
-                        const folderDiv = document.createElement('div');
-                        folderDiv.className = 'mt-4';
-                        folderDiv.innerHTML = `<p class="text-sm font-semibold text-gray-700 mb-2">📁 ${item.name}/</p>`;
-                        filesList.appendChild(folderDiv);
-                        renderFileTree(item.children, item.path);
-                    }
-                });
-            }
-
-            renderFileTree(files);
-            filesContainer.classList.remove('hidden');
-        }
-
-        function downloadFile(segmentId, filePath) {
-            const encodedPath = encodeURIComponent(filePath);
-            const downloadUrl = `${API_URL}/download/${segmentId}/${encodedPath}`;
-            const link = document.createElement('a');
-            link.href = downloadUrl;
-            link.click();
-        }
-
-        // Load segments overview
-        async function loadSegments() {
-            try {
-                const response = await axios.get(`${API_URL}/segments`);
-                const segmentsOverview = document.getElementById('segmentsOverview');
-                
-                if (response.data.segments.length === 0) {
-                    segmentsOverview.innerHTML = '<p class="col-span-full text-center text-gray-500 py-8">No segments created yet. Upload files to get started!</p>';
-                } else {
-                    segmentsOverview.innerHTML = response.data.segments.map(segment => `
-                        <div class="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4 hover:shadow-md transition">
-                            <div class="flex items-center justify-between mb-3">
-                                <h3 class="text-lg font-bold text-gray-900">📁 Segment <span class="text-blue-600">#${segment.id}</span></h3>
-                                <span class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-bold">${segment.file_count}</span>
-                            </div>
-                            <p class="text-sm text-gray-600 mb-3">${segment.file_count === 1 ? 'file' : 'files'}</p>
-                            <button onclick="document.getElementById('accessSegmentId').value = '${segment.id}'; switchSection('access'); document.getElementById('accessForm').dispatchEvent(new Event('submit'));"
-                                    class="w-full px-3 py-2 bg-green-600 hover:bg-green-700 text-white text-sm rounded transition font-medium">
-                                View Files
-                            </button>
-                        </div>
-                    `).join('');
-                }
-            } catch (error) {
-                console.error('Failed to load segments:', error);
-            }
-        }
-
-        // Check backend status
-        async function checkBackendStatus() {
-            try {
-                await axios.get(`${API_URL}/health`, { timeout: 2000 });
-                document.getElementById('statusIndicator').innerHTML = '● Online';
-                document.getElementById('statusIndicator').className = 'text-green-300 font-bold';
-            } catch {
-                document.getElementById('statusIndicator').innerHTML = '● Offline';
-                document.getElementById('statusIndicator').className = 'text-red-300 font-bold';
-            }
-        }
-
-        // Initial load
-        window.addEventListener('load', () => {
-            updateServerDisplay();
-            checkIfHostPC();
-            checkLiveServerStatus();
-            checkBackendStatus();
-            setInterval(checkBackendStatus, 10000);
-            setInterval(checkLiveServerStatus, 3000);  // Check server status every 3 seconds
-        });
+        addDebugLog('🚀 Page loaded, waiting for app.js...', 'log');
     </script>
+
+    <script src="app.js"></script>
 </body>
+
 </html>
